@@ -1,26 +1,13 @@
-"""
-Testes unitários — toda chamada ao banco é mockada,
-então os testes rodam sem precisar de conexão real.
-"""
-
-from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
+﻿from fastapi.testclient import TestClient
 from src.app import app
 import pytest
 
 client = TestClient(app)
 
-# Gastos fictícios que simulam retorno do banco
-GASTOS_FALSOS = [
-    {"id": 1, "valor": 50.0, "descricao": "mercado"},
-    {"id": 2, "valor": 30.0, "descricao": "lanche"},
-]
-
 
 @pytest.fixture(autouse=True)
 def mock_db(monkeypatch):
-    """Substitui todas as funções de banco por versões fake antes de cada teste."""
-    gastos_em_memoria: list[dict] = []
+    gastos_em_memoria = []
     proximo_id = {"v": 1}
 
     def fake_listar():
@@ -50,10 +37,6 @@ def mock_db(monkeypatch):
     gastos_em_memoria.clear()
 
 
-# ------------------------------------------------------------------
-# Testes das rotas
-# ------------------------------------------------------------------
-
 def test_adicionar_gasto():
     resposta = client.post("/gastos", json={"valor": 50.0, "descricao": "mercado"})
     assert resposta.status_code == 201
@@ -74,7 +57,7 @@ def test_listar_gastos():
 
 def test_ver_total():
     client.post("/gastos", json={"valor": 100.0, "descricao": "supermercado"})
-    client.post("/gastos", json={"valor": 50.0, "descricao": "farmácia"})
+    client.post("/gastos", json={"valor": 50.0, "descricao": "farmacia"})
     resposta = client.get("/total")
     assert resposta.json()["total_brl"] == 150.0
 
