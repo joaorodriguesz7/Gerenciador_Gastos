@@ -4,6 +4,7 @@ import pytest
 
 client = TestClient(app)
 
+
 @pytest.fixture(autouse=True)
 def mock_db(monkeypatch):
     gastos_em_memoria = []
