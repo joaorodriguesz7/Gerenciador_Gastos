@@ -1,22 +1,52 @@
+"""
+Testes de integração — simulam o banco e a API externa de câmbio,
+testando o comportamento end-to-end das rotas HTTP.
+"""
+
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
-from src.app import app, gastos, buscar_cotacao_dolar
+from src.app import app, buscar_cotacao_dolar
 import pytest
-
-
-@pytest.fixture(autouse=True)
-def limpar_gastos():
-    gastos.clear()
-    yield
-    gastos.clear()
-
 
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def mock_db(monkeypatch):
+    """Mesma fixture de mock do banco usada nos testes unitários."""
+    gastos_em_memoria: list[dict] = []
+    proximo_id = {"v": 1}
+
+    def fake_listar():
+        return list(gastos_em_memoria)
+
+    def fake_adicionar(valor, descricao):
+        novo = {"id": proximo_id["v"], "valor": valor, "descricao": descricao}
+        gastos_em_memoria.append(novo)
+        proximo_id["v"] += 1
+        return novo
+
+    def fake_remover(gasto_id):
+        for i, g in enumerate(gastos_em_memoria):
+            if g["id"] == gasto_id:
+                return gastos_em_memoria.pop(i)
+        return None
+
+    def fake_total():
+        return sum(g["valor"] for g in gastos_em_memoria)
+
+    monkeypatch.setattr("src.app.db_listar_gastos", fake_listar)
+    monkeypatch.setattr("src.app.db_adicionar_gasto", fake_adicionar)
+    monkeypatch.setattr("src.app.db_remover_gasto", fake_remover)
+    monkeypatch.setattr("src.app.db_calcular_total", fake_total)
+
+    yield
+    gastos_em_memoria.clear()
+
+
 # -------------------------------------------------------
-# Teste 1: verifica que buscar_cotacao_dolar() retorna
-# um float correto quando a API responde normalmente.
+# Teste 1: buscar_cotacao_dolar() retorna float correto
+# quando a API externa responde normalmente.
 # -------------------------------------------------------
 def test_buscar_cotacao_dolar_sucesso():
     resposta_falsa = MagicMock()
@@ -31,8 +61,8 @@ def test_buscar_cotacao_dolar_sucesso():
 
 
 # -------------------------------------------------------
-# Teste 2: verifica que GET /total/dolar faz o cálculo
-# correto de conversão via endpoint HTTP.
+# Teste 2: GET /total/dolar calcula conversão corretamente
+# usando dados reais do banco (mockado) e câmbio mockado.
 # -------------------------------------------------------
 def test_endpoint_total_em_dolar():
     client.post("/gastos", json={"valor": 105.0, "descricao": "supermercado"})
@@ -52,8 +82,7 @@ def test_endpoint_total_em_dolar():
 
 
 # -------------------------------------------------------
-# Teste 3: verifica que o endpoint retorna 503 quando
-# a API externa está fora do ar.
+# Teste 3: retorna 503 quando a API de câmbio está fora.
 # -------------------------------------------------------
 def test_endpoint_total_dolar_api_indisponivel():
     client.post("/gastos", json={"valor": 50.0, "descricao": "teste"})
@@ -63,3 +92,32 @@ def test_endpoint_total_dolar_api_indisponivel():
 
     assert resposta.status_code == 503
     assert "Erro ao buscar cotação" in resposta.json()["detail"]
+
+
+# -------------------------------------------------------
+# Teste 4 (novo): fluxo completo — adicionar, listar,
+# verificar total e remover em sequência.
+# -------------------------------------------------------
+def test_fluxo_completo_crud():
+    # Adiciona dois gastos
+    r1 = client.post("/gastos", json={"valor": 80.0, "descricao": "aluguel"})
+    r2 = client.post("/gastos", json={"valor": 20.0, "descricao": "internet"})
+    assert r1.status_code == 201
+    assert r2.status_code == 201
+
+    # Lista e verifica quantidade
+    lista = client.get("/gastos").json()["gastos"]
+    assert len(lista) == 2
+
+    # Verifica total
+    total = client.get("/total").json()["total_brl"]
+    assert total == 100.0
+
+    # Remove o primeiro gasto pelo ID
+    id_remover = r1.json()["gasto"]["id"]
+    del_resp = client.delete(f"/gastos/{id_remover}")
+    assert del_resp.status_code == 200
+
+    # Total deve ser apenas o segundo gasto
+    total_apos = client.get("/total").json()["total_brl"]
+    assert total_apos == 20.0

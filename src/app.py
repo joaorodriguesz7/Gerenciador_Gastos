@@ -3,7 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
 
-app = FastAPI(title="Gerenciador de Gastos", version="2.0.0")
+from src.database import (
+    db_listar_gastos,
+    db_adicionar_gasto,
+    db_remover_gasto,
+    db_calcular_total,
+)
+
+app = FastAPI(title="Gerenciador de Gastos", version="3.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -11,7 +18,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-gastos: list[dict] = []
 
 
 # -------------------------------------------------
@@ -23,7 +29,7 @@ class Gasto(BaseModel):
 
 
 # -------------------------------------------------
-# Rotas CRUD
+# Rotas CRUD — agora com persistência no Supabase
 # -------------------------------------------------
 
 @app.get("/")
@@ -35,25 +41,25 @@ def raiz():
 def adicionar_gasto(gasto: Gasto):
     if gasto.valor < 0:
         raise HTTPException(status_code=400, detail="Valor não pode ser negativo")
-    gastos.append({"valor": gasto.valor, "descricao": gasto.descricao})
-    return {"mensagem": "Gasto adicionado", "gasto": gasto}
+    novo = db_adicionar_gasto(gasto.valor, gasto.descricao)
+    return {"mensagem": "Gasto adicionado", "gasto": novo}
 
 
 @app.get("/gastos")
 def listar_gastos():
-    return {"gastos": gastos}
+    return {"gastos": db_listar_gastos()}
 
 
 @app.get("/total")
 def ver_total():
-    return {"total_brl": sum(g["valor"] for g in gastos)}
+    return {"total_brl": db_calcular_total()}
 
 
-@app.delete("/gastos/{index}", status_code=200)
-def remover_gasto(index: int):
-    if index < 0 or index >= len(gastos):
-        raise HTTPException(status_code=404, detail="Índice inválido")
-    removido = gastos.pop(index)
+@app.delete("/gastos/{gasto_id}", status_code=200)
+def remover_gasto(gasto_id: int):
+    removido = db_remover_gasto(gasto_id)
+    if removido is None:
+        raise HTTPException(status_code=404, detail="Gasto não encontrado")
     return {"mensagem": "Gasto removido", "gasto": removido}
 
 
@@ -75,7 +81,7 @@ def ver_total_em_dolar():
     """Retorna o total dos gastos convertido para dólares (USD)."""
     try:
         cotacao = buscar_cotacao_dolar()
-        total_brl = sum(g["valor"] for g in gastos)
+        total_brl = db_calcular_total()
         total_usd = round(total_brl / cotacao, 2)
         return {
             "total_brl": total_brl,
