@@ -1,3 +1,8 @@
+"""
+Módulo de conexão com o Supabase (PostgreSQL na nuvem).
+Toda comunicação com o banco passa por aqui.
+"""
+
 import os
 from supabase import create_client, Client
 
