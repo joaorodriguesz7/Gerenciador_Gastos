@@ -3,7 +3,6 @@ Testes unitários — toda chamada ao banco é mockada,
 então os testes rodam sem precisar de conexão real.
 """
 
-from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from src.app import app
 import pytest
