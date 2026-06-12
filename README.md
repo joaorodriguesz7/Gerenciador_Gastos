@@ -20,8 +20,6 @@ O sistema permite registrar gastos, visualizar uma lista com todas as despesas e
 | Pedro Henrique Souza | [@pedro-username](https://github.com/) |
 | Arthur Santana | [@arthur-username](https://github.com/) |
 
-> ⚠️ Substituir `@pedro-username` e `@arthur-username` pelos usuários reais do GitHub.
-
 ## ⚙️ Funcionalidades
 - Adicionar gastos (salvos no banco de dados)
 - Listar gastos persistidos
