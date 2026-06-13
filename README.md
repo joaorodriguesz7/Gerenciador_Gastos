@@ -77,8 +77,8 @@ cd Gerenciador_Gastos
 pip install -r requirements.txt
 
 # 3. Configurar variáveis de ambiente
-export SUPABASE_URL="https://xxxx.supabase.co"
-export SUPABASE_KEY="sua-chave-aqui"
+export SUPABASE_URL="sb_publishable_cse4qJDBY-7ncUHjB3yR9A_tGwR-GVV"
+export SUPABASE_KEY="sb_secret_AQOwtp-UxW4n2Hpwg_4Gsw_AhCHDDnA"
 
 # 4. Rodar a aplicação
 uvicorn src.app:app --reload
