@@ -17,8 +17,8 @@ O sistema permite registrar gastos, visualizar uma lista com todas as despesas e
 | Aluno | GitHub |
 |---|---|
 | João Paulo Rodrigues de Oliveira | [@joaorodriguesz7](https://github.com/joaorodriguesz7) |
-| Pedro Henrique Souza | [@pedro-username](https://github.com/) |
-| Arthur Santana | [@arthur-username](https://github.com/) |
+| Pedro Henrique Souza | [@Opedrohenrique27](https://github.com/Opedrohenrique27) |
+| Arthur Santana | [@santanasx](https://github.com/santanasx) |
 
 ## ⚙️ Funcionalidades
 - Adicionar gastos (salvos no banco de dados)
