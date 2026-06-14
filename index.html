@@ -45,7 +45,7 @@
       letter-spacing: 0.05em;
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 10px 12px;
       border: 1px solid #ddd;
@@ -54,9 +54,10 @@
       margin-bottom: 10px;
       outline: none;
       transition: border 0.2s;
+      background: white;
     }
 
-    input:focus { border-color: #4f46e5; }
+    input:focus, select:focus { border-color: #4f46e5; }
 
     button {
       width: 100%;
@@ -79,12 +80,24 @@
       padding: 10px 0;
       border-bottom: 1px solid #f0f0f0;
       font-size: 0.95rem;
+      gap: 8px;
     }
 
     .gasto-item:last-child { border-bottom: none; }
 
+    .gasto-info { display: flex; flex-direction: column; flex: 1; }
     .gasto-item .desc { color: #333; }
-    .gasto-item .valor { color: #4f46e5; font-weight: 600; }
+    .gasto-item .categoria-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      background: #ede9fe;
+      color: #4f46e5;
+      border-radius: 4px;
+      padding: 1px 6px;
+      margin-top: 3px;
+      width: fit-content;
+    }
+    .gasto-item .valor { color: #4f46e5; font-weight: 600; white-space: nowrap; }
 
     .btn-remover {
       background: none;
@@ -152,6 +165,15 @@
     <h2>Adicionar gasto</h2>
     <input type="number" id="valor" placeholder="Valor (R$)" min="0" step="0.01" />
     <input type="text" id="descricao" placeholder="Descrição" />
+    <select id="categoria">
+      <option value="outros">📦 Outros</option>
+      <option value="alimentacao">🍔 Alimentação</option>
+      <option value="transporte">🚗 Transporte</option>
+      <option value="saude">💊 Saúde</option>
+      <option value="lazer">🎮 Lazer</option>
+      <option value="moradia">🏠 Moradia</option>
+      <option value="educacao">📚 Educação</option>
+    </select>
     <button onclick="adicionarGasto()">Adicionar</button>
     <p class="msg" id="msg-add"></p>
   </div>
@@ -179,6 +201,16 @@
 <script>
   const API = 'https://gerenciador-gastos-jade.vercel.app';
 
+  const categoriaEmoji = {
+    alimentacao: '🍔 Alimentação',
+    transporte: '🚗 Transporte',
+    saude: '💊 Saúde',
+    lazer: '🎮 Lazer',
+    moradia: '🏠 Moradia',
+    educacao: '📚 Educação',
+    outros: '📦 Outros'
+  };
+
   async function carregarGastos() {
     const res = await fetch(`${API}/gastos`);
     const dados = await res.json();
@@ -187,11 +219,14 @@
     if (dados.gastos.length === 0) {
       lista.innerHTML = '<p class="vazio">Nenhum gasto registrado.</p>';
     } else {
-      lista.innerHTML = dados.gastos.map((g, i) => `
+      lista.innerHTML = dados.gastos.map(g => `
         <div class="gasto-item">
-          <span class="desc">${g.descricao}</span>
+          <div class="gasto-info">
+            <span class="desc">${g.descricao}</span>
+            <span class="categoria-tag">${categoriaEmoji[g.categoria] || g.categoria}</span>
+          </div>
           <span class="valor">R$ ${g.valor.toFixed(2)}</span>
-          <button class="btn-remover" onclick="removerGasto(${i})">✕</button>
+          <button class="btn-remover" onclick="removerGasto(${g.id})">✕</button>
         </div>
       `).join('');
     }
@@ -218,6 +253,7 @@
   async function adicionarGasto() {
     const valor = parseFloat(document.getElementById('valor').value);
     const descricao = document.getElementById('descricao').value.trim();
+    const categoria = document.getElementById('categoria').value;
     const msg = document.getElementById('msg-add');
 
     if (!valor || valor <= 0 || !descricao) {
@@ -228,12 +264,13 @@
     const res = await fetch(`${API}/gastos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ valor, descricao })
+      body: JSON.stringify({ valor, descricao, categoria })
     });
 
     if (res.ok) {
       document.getElementById('valor').value = '';
       document.getElementById('descricao').value = '';
+      document.getElementById('categoria').value = 'outros';
       msg.textContent = '';
       await carregarGastos();
     } else {
@@ -241,8 +278,8 @@
     }
   }
 
-  async function removerGasto(index) {
-    await fetch(`${API}/gastos/${index}`, { method: 'DELETE' });
+  async function removerGasto(id) {
+    await fetch(`${API}/gastos/${id}`, { method: 'DELETE' });
     await carregarGastos();
   }
 
