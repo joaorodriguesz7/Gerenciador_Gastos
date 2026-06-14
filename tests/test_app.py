@@ -13,8 +13,8 @@ def mock_db(monkeypatch):
     def fake_listar():
         return list(gastos_em_memoria)
 
-    def fake_adicionar(valor, descricao):
-        novo = {"id": proximo_id["v"], "valor": valor, "descricao": descricao}
+    def fake_adicionar(valor, descricao, categoria="outros"):
+        novo = {"id": proximo_id["v"], "valor": valor, "descricao": descricao, "categoria": categoria}
         gastos_em_memoria.append(novo)
         proximo_id["v"] += 1
         return novo
@@ -38,7 +38,7 @@ def mock_db(monkeypatch):
 
 
 def test_adicionar_gasto():
-    resposta = client.post("/gastos", json={"valor": 50.0, "descricao": "mercado"})
+    resposta = client.post("/gastos", json={"valor": 50.0, "descricao": "mercado", "categoria": "alimentacao"})
     assert resposta.status_code == 201
     assert resposta.json()["gasto"]["valor"] == 50.0
 

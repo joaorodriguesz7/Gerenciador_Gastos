@@ -26,6 +26,7 @@ app.add_middleware(
 class Gasto(BaseModel):
     valor: float
     descricao: str
+    categoria: str = "outros"
 
 
 # -------------------------------------------------
@@ -41,7 +42,7 @@ def raiz():
 def adicionar_gasto(gasto: Gasto):
     if gasto.valor < 0:
         raise HTTPException(status_code=400, detail="Valor não pode ser negativo")
-    novo = db_adicionar_gasto(gasto.valor, gasto.descricao)
+    novo = db_adicionar_gasto(gasto.valor, gasto.descricao, gasto.categoria)
     return {"mensagem": "Gasto adicionado", "gasto": novo}
 
 
