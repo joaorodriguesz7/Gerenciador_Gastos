@@ -38,7 +38,7 @@ def mock_db(monkeypatch):
 
 
 def test_adicionar_gasto():
-    resposta = client.post("/gastos", json={"valor": 50.0, "descricao": "mercado"})
+    resposta = client.post("/gastos", json={"valor": 50.0, "descricao": "mercado", "categoria": "alimentacao"})
     assert resposta.status_code == 201
     assert resposta.json()["gasto"]["valor"] == 50.0
 
