@@ -25,12 +25,11 @@ def db_listar_gastos() -> list[dict]:
     return resposta.data
 
 
-def db_adicionar_gasto(valor: float, descricao: str) -> dict:
-    """Insere um novo gasto e retorna o registro criado."""
+def db_adicionar_gasto(valor: float, descricao: str, categoria: str = "outros") -> dict:
     client = get_client()
     resposta = (
         client.table("gastos")
-        .insert({"valor": valor, "descricao": descricao})
+        .insert({"valor": valor, "descricao": descricao, "categoria": categoria})
         .execute()
     )
     return resposta.data[0]
