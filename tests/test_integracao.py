@@ -20,8 +20,8 @@ def mock_db(monkeypatch):
     def fake_listar():
         return list(gastos_em_memoria)
 
-    def fake_adicionar(valor, descricao):
-        novo = {"id": proximo_id["v"], "valor": valor, "descricao": descricao}
+    def fake_adicionar(valor, descricao, categoria="outros"):
+        novo = {"id": proximo_id["v"], "valor": valor, "descricao": descricao, "categoria": categoria}}
         gastos_em_memoria.append(novo)
         proximo_id["v"] += 1
         return novo
